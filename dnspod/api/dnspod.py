@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import requests
 import json
 
@@ -84,57 +86,163 @@ class Dnspod(object):
 
     def add_domain(self, domain, **kwargs):
         url = self.BASE_URL + "/Domain.Create"
-	self.params.update({"domain": domain})
-	self.params.update(kwargs)
-	
-	result = {}
-	try:
-	    response = requests.post(url, data=self.params, headers=self.headers)
-	    data = response.json()
-	
-	    result.update({
-		"status": {
-		    "code": data["status"]["code"],
-		    "message": data["status"]["message"]
-		}
-	    })
+        self.params.update({"domain": domain})
+        self.params.update(kwargs)
+    
+        result = {}
+        try:
+            response = requests.post(url, data=self.params, headers=self.headers)
+            data = response.json()
+    
+            result.update({
+                "status": {
+                "code": data["status"]["code"],
+                "message": data["status"]["message"]
+                }
+            })
 
-	    if data["status"]["code"] == "1":
-		result.update({
-		    "domain": {
-			"id": data["domain"]["id"],
-			"domain": data["domain"]["domain"]
-		    }
-		})
-	    return json.dumps(result, indent=4)
-	except Exception as e:
-	    raise
+            if data["status"]["code"] == "1":
+                result.update({
+                    "domain": {
+                    "id": data["domain"]["id"],
+                    "domain": data["domain"]["domain"]
+                    }
+                })
+            return json.dumps(result, indent=4)
+        except Exception as e:
+            raise
 
     def delete_domain(self, domain_id, **kwargs):
         url = self.BASE_URL + "/Domain.Remove"
-	self.params.update({"domain_id": domain_id})
-	self.update(kwargs)
+        self.params.update({"domain_id": domain_id})
+        self.params.update(kwargs)
 
-	result = {}
-	try:
-	    response = requests.post(url, data=self.params, headers=self.headers)
-	    data = response.data()
-	    
-	    result.update({
-		"status": {
-		    "code": data["status"]["code"],
-		    "message": data["status"]["message"]
-		}
-	    })
-	    return json.dumps(result, indent=4)
-	except Exception as e:
-	    raise
-	
-    def add_record(self):
-        pass
+        result = {}
+        try:
+            response = requests.post(url, data=self.params, headers=self.headers)
+            data = response.json()
+        
+            result.update({
+                "status": {
+                "code": data["status"]["code"],
+                "message": data["status"]["message"]
+                }
+            })
+            return json.dumps(result, indent=4)
+        except Exception as e:
+            raise
+    
+    def add_record(self, domain_id, sub_domain, record_type, value, record_line_id, **kwargs):
+        url = self.BASE_URL + "/Record.Create"
+        self.params.update({
+            "domain_id": domain_id,
+            "sub_domain": sub_domain,
+            "record_type": record_type,
+            "record_line_id": record_line_id,
+            "value": value
+        })
+        self.params.update(kwargs)
 
-    def delete_record(self):
-        pass
+        result = {}
+        try:
+            response = requests.post(url, data=self.params, headers=self.headers)
+            data = response.json()
+            result.update({
+                "status": {
+                    "code": data["status"]["code"],
+                    "message": data["status"]["message"]
+                }
+            })            
+            
+            if data["status"]["code"] == "1":
+                result.update({
+                    "record": {
+                        "id": data["record"]["id"],
+                        "name": data["record"]["name"],
+                        "status": data["record"]["status"]
+                    }
+                })
+            return json.dumps(result, indent=4)
+        except Exception as e:
+            raise
+        
+    def delete_record(self, domain_id, record_id):
+        url = self.BASE_URL + "/Record.Remove"
+        self.params.update({
+            "domain_id": domain_id,
+            "record_id": record_id
+        })
+        
+        result = {}
+        try:
+            response = requests.post(url, data=self.params, headers=self.headers)
+            data = response.json()
+            result.update({
+                "status": {
+                    "code": data["status"]["code"],
+                    "message": data["status"]["message"]
+                }
+            })
+            return json.dumps(result, indent=4)
+        except Exception as e:
+            raise
+
+    def edit_record(self, domain_id, record_id, record_line_id, **kwargs):
+        url = self.BASE_URL + "/Record.Modify"
+        self.params.update({
+           "domain_id": domain_id,
+            "record_id": record_id,
+            "record_line_id": record_line_id
+        })
+        self.params.update(kwargs)
+ 
+        result = {}
+        try:
+            response = requests.post(url, data=self.params, headers=self.headers)
+            data = response.json()
+            result.update({
+                "status": {
+                    "code": data["status"]["code"],
+                    "message": data["status"]["message"]
+                }
+            })
+
+            if data["status"]["code"] == "1":
+                result.update({
+                    "record": data["record"]
+                })
+
+        except Exception as e:
+            raise
+        return json.dumps(result, indent=4)
+
+    def get_lines(self, domain_id, domain_grade="D_Free"):
+        url = self.BASE_URL + "/Record.Line"
+        self.params.update({
+            "domain_id": domain_id,
+            "domain_grade": domain_grade
+        })
+
+        result = {}
+        try:
+            response = requests.post(url, data=self.params, headers=self.headers)
+            data = response.json()
+            result.update({
+                "status": {
+                    "code": data["status"]["code"],
+                    "message": data["status"]["message"]
+                }
+            })
+
+            if data["status"]["code"] == "1":
+                result.update({
+                    "line_ids": data["line_ids"],
+                    "lines": data["lines"]
+                })
+        except Exception as e:
+            raise
+
+        return json.dumps(result, indent=4)
 
 if __name__ == "__main__":
     dnspod = Dnspod()
@@ -143,4 +251,32 @@ if __name__ == "__main__":
     domains = data["domains"]
     domain_ids = [domain["id"] for domain in domains]
     for domain_id in domain_ids:
-	print dnspod.get_all_records(domain_id)
+        print dnspod.get_all_records(domain_id)
+    data = dnspod.add_domain("huzichun.com")
+    data = json.loads(data)
+    if data["status"]["code"] == "1":
+        domain_id = data["domain"]["id"]
+        import time
+        time.sleep(5)
+        data = dnspod.get_lines(domain_id)
+        data = json.loads(data)
+        record_line_id = data["line_ids"][u"默认"]
+        data = dnspod.add_record(domain_id, "www", "A", "172.16.0.1", record_line_id)
+        data = json.loads(data)
+        print data["status"]["message"]
+        record_id = data["record"]["id"]
+
+        time.sleep(5)
+        data = dnspod.edit_record(domain_id, record_id, record_line_id, **{"value": "172.16.0.2"})
+        data = json.loads(data)
+        print data
+
+        time.sleep(5)
+        data = dnspod.delete_record(domain_id, record_id)
+        data = json.loads(data)
+        print data["status"]["message"]
+
+        time.sleep(5)
+        data = dnspod.delete_domain(domain_id)
+        data = json.loads(data)
+        print data["status"]["message"]
